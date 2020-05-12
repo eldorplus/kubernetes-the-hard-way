@@ -36,7 +36,7 @@ Copy the `encryption-config.yaml` encryption config file to each controller inst
 
 ```sh
 for instance in controller-{0..2}; do
-  gcloud compute scp --tunnel-through-iap encryption-config.yaml ${instance}:~/
+  gcloud compute scp encryption-config.yaml ${instance}:~/
 done
 ```
 

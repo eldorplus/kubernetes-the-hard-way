@@ -49,7 +49,7 @@ cfssl gencert -initca ca-csr.json | cfssljson -bare ca
 
 Results:
 
-```
+```sh
 ca-key.pem
 ca.pem
 ```
@@ -92,7 +92,7 @@ cfssl gencert \
 
 Results:
 
-```
+```sh
 admin-key.pem
 admin.pem
 ```
@@ -139,7 +139,7 @@ done
 
 Results:
 
-```
+```sh
 worker-0-key.pem
 worker-0.pem
 worker-1-key.pem
@@ -182,11 +182,10 @@ cfssl gencert \
 
 Results:
 
-```
+```sh
 kube-controller-manager-key.pem
 kube-controller-manager.pem
 ```
-
 
 ### The Kube Proxy Client Certificate
 
@@ -222,7 +221,7 @@ cfssl gencert \
 
 Results:
 
-```
+```sh
 kube-proxy-key.pem
 kube-proxy.pem
 ```
@@ -261,11 +260,10 @@ cfssl gencert \
 
 Results:
 
-```
+```sh
 kube-scheduler-key.pem
 kube-scheduler.pem
 ```
-
 
 ### The Kubernetes API Server Certificate
 
@@ -312,7 +310,7 @@ cfssl gencert \
 
 Results:
 
-```
+```sh
 kubernetes-key.pem
 kubernetes.pem
 ```
@@ -353,7 +351,7 @@ cfssl gencert \
 
 Results:
 
-```
+```sh
 service-account-key.pem
 service-account.pem
 ```
@@ -365,7 +363,7 @@ Copy the appropriate certificates and private keys to each worker instance:
 
 ```sh
 for instance in worker-{0..2}; do
-  gcloud compute scp --tunnel-through-iap ca.pem ${instance}-key.pem ${instance}.pem ${instance}:~/
+  gcloud compute scp ca.pem ${instance}-key.pem ${instance}.pem ${instance}:~/
 done
 ```
 
@@ -373,7 +371,7 @@ Copy the appropriate certificates and private keys to each controller instance:
 
 ```sh
 for instance in controller-{0..2}; do
-  gcloud compute scp --tunnel-through-iap ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
+  gcloud compute scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
     service-account-key.pem service-account.pem ${instance}:~/
 done
 ```

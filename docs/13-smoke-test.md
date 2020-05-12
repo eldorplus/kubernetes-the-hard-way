@@ -8,15 +8,15 @@ In this section you will verify the ability to [encrypt secret data at rest](htt
 
 Create a generic secret:
 
-```
+```sh
 kubectl create secret generic kubernetes-the-hard-way \
   --from-literal="mykey=mydata"
 ```
 
 Print a hexdump of the `kubernetes-the-hard-way` secret stored in etcd:
 
-```
-gcloud compute  ssh --tunnel-through-iap controller-0 \
+```sh
+gcloud compute ssh controller-0 \
   --command "sudo ETCDCTL_API=3 etcdctl get \
   --endpoints=https://127.0.0.1:2379 \
   --cacert=/etc/etcd/ca.pem \
@@ -27,7 +27,7 @@ gcloud compute  ssh --tunnel-through-iap controller-0 \
 
 > output
 
-```
+```sh
 00000000  2f 72 65 67 69 73 74 72  79 2f 73 65 63 72 65 74  |/registry/secret|
 00000010  73 2f 64 65 66 61 75 6c  74 2f 6b 75 62 65 72 6e  |s/default/kubern|
 00000020  65 74 65 73 2d 74 68 65  2d 68 61 72 64 2d 77 61  |etes-the-hard-wa|
@@ -53,19 +53,19 @@ In this section you will verify the ability to create and manage [Deployments](h
 
 Create a deployment for the [nginx](https://nginx.org/en/) web server:
 
-```
+```sh
 kubectl create deployment nginx --image=nginx
 ```
 
 List the pod created by the `nginx` deployment:
 
-```
+```sh
 kubectl get pods -l app=nginx
 ```
 
 > output
 
-```
+```sh
 NAME                     READY   STATUS    RESTARTS   AGE
 nginx-554b9c67f9-vt5rn   1/1     Running   0          10s
 ```
@@ -76,32 +76,32 @@ In this section you will verify the ability to access applications remotely usin
 
 Retrieve the full name of the `nginx` pod:
 
-```
-POD_NAME=$(kubectl get pods -l app=nginx -o name)
+```sh
+POD_NAME=$(kubectl get pods -l app=nginx -o jsonpath="{.items[0].metadata.name}")
 ```
 
 Forward port `8080` on your local machine to port `80` of the `nginx` pod:
 
-```
+```sh
 kubectl port-forward $POD_NAME 8080:80
 ```
 
 > output
 
-```
+```sh
 Forwarding from 127.0.0.1:8080 -> 80
 Forwarding from [::1]:8080 -> 80
 ```
 
 In a new terminal make an HTTP request using the forwarding address:
 
-```
+```sh
 curl --head http://127.0.0.1:8080
 ```
 
 > output
 
-```
+```sh
 HTTP/1.1 200 OK
 Server: nginx/1.17.3
 Date: Sat, 14 Sep 2019 21:10:11 GMT
@@ -115,7 +115,7 @@ Accept-Ranges: bytes
 
 Switch back to the previous terminal and stop the port forwarding to the `nginx` pod:
 
-```
+```sh
 Forwarding from 127.0.0.1:8080 -> 80
 Forwarding from [::1]:8080 -> 80
 Handling connection for 8080
@@ -127,13 +127,13 @@ In this section you will verify the ability to [retrieve container logs](https:/
 
 Print the `nginx` pod logs:
 
-```
+```sh
 kubectl logs $POD_NAME
 ```
 
 > output
 
-```
+```sh
 127.0.0.1 - - [14/Sep/2019:21:10:11 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.52.1" "-"
 ```
 
@@ -143,13 +143,13 @@ In this section you will verify the ability to [execute commands in a container]
 
 Print the nginx version by executing the `nginx -v` command in the `nginx` container:
 
-```
+```sh
 kubectl exec -ti $POD_NAME -- nginx -v
 ```
 
 > output (your output might vary depending on the nginx version)
 
-```
+```sh
 nginx version: nginx/1.17.3
 ```
 
@@ -159,15 +159,17 @@ In this section you will verify the ability to expose applications using a [Serv
 
 Expose the `nginx` deployment using a [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport) service:
 
-```
+```sh
 kubectl expose deployment nginx --port 80 --type NodePort
 ```
 
 > The LoadBalancer service type can not be used because your cluster is not configured with [cloud provider integration](https://kubernetes.io/docs/getting-started-guides/scratch/#cloud-provider). Setting up cloud provider integration is out of scope for this tutorial.
 
 We will setup a TCP LoadBalancer with the worker nodes as target pool using the port allocated with the service of type NodePort, this will expose the nginx deployment to the internet (We have to use a Load Balancer because the nodes doesn't have a Public IP)
-```
-{
+
+Retrieve the node port assigned to the `nginx` service:
+
+```sh
   gcloud compute addresses create nginx-service\
     --region $(gcloud config get-value compute/region)
 
@@ -175,10 +177,12 @@ We will setup a TCP LoadBalancer with the worker nodes as target pool using the 
     --region $(gcloud config get-value compute/region) \
     --format 'value(address)')
 
-  # NODE_PORT=$(kubectl get svc nginx \
-  # --output=jsonpath='{range .spec.ports[0]}{.nodePort}')
   NODE_PORT=$(kubectl get svc nginx \
   --no-headers -o custom-columns=:.spec.ports[0].nodePort')
+
+  gcloud compute firewall-rules create kubernetes-the-hard-way-allow-nginx-service \
+    --allow=tcp:${NODE_PORT} \
+    --network kubernetes-the-hard-way
 
   gcloud compute firewall-rules create nginx-service \
     --network kubernetes-the-hard-way \
@@ -200,18 +204,22 @@ We will setup a TCP LoadBalancer with the worker nodes as target pool using the 
     --ports ${NODE_PORT} \
     --region $(gcloud config get-value compute/region) \
     --target-pool nginx-target-pool
-}
+```
+
+```sh
+EXTERNAL_IP=$(gcloud compute instances describe worker-0 \
+  --format 'value(networkInterfaces[0].accessConfigs[0].natIP)')
 ```
 
 Make an HTTP request using the external IP address and the nginx node port:
 
-```
-curl -I http://${NGINX_SERVICE_PUBLIC_ADDRESS}:${NODE_PORT}
+```sh
+curl -I http://${EXTERNAL_IP}:${NODE_PORT}
 ```
 
 > output
 
-```
+```sh
 HTTP/1.1 200 OK
 Server: nginx/1.17.3
 Date: Sat, 14 Sep 2019 21:12:35 GMT

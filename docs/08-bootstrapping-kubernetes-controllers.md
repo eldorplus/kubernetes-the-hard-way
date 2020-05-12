@@ -6,8 +6,8 @@ In this lab you will bootstrap the Kubernetes control plane across three compute
 
 The commands in this lab must be run on each controller instance: `controller-0`, `controller-1`, and `controller-2`. Login to each controller instance using the `gcloud` command. Example:
 
-```
-gcloud compute ssh --tunnel-through-iap controller-0
+```sh
+gcloud compute ssh controller-0
 ```
 
 ### Running commands in parallel with tmux
@@ -18,7 +18,7 @@ gcloud compute ssh --tunnel-through-iap controller-0
 
 Create the Kubernetes configuration directory:
 
-```
+```sh
 sudo mkdir -p /etc/kubernetes/config
 ```
 
@@ -26,7 +26,7 @@ sudo mkdir -p /etc/kubernetes/config
 
 Download the official Kubernetes release binaries:
 
-```
+```sh
 wget -q --show-progress --https-only --timestamping \
   "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-apiserver" \
   "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-controller-manager" \
@@ -36,14 +36,14 @@ wget -q --show-progress --https-only --timestamping \
 
 Install the Kubernetes binaries:
 
-```
+```sh
 chmod +x kube-apiserver kube-controller-manager kube-scheduler kubectl
 sudo mv kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin/
 ```
 
 ### Configure the Kubernetes API Server
 
-```
+```sh
 sudo mkdir -p /var/lib/kubernetes/
 
 sudo mv ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
@@ -53,7 +53,7 @@ sudo mv ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
 
 The instance internal IP address will be used to advertise the API Server to members of the cluster. Retrieve the internal IP address for the current compute instance:
 
-```
+```sh
 INTERNAL_IP=$(curl -s -H "Metadata-Flavor: Google" \
   http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)
 ```
@@ -109,7 +109,7 @@ EOF
 
 Move the `kube-controller-manager` kubeconfig into place:
 
-```
+```sh
 sudo mv kube-controller-manager.kubeconfig /var/lib/kubernetes/
 ```
 
@@ -148,7 +148,7 @@ EOF
 
 Move the `kube-scheduler` kubeconfig into place:
 
-```
+```sh
 sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
 ```
 
@@ -187,7 +187,7 @@ EOF
 
 ### Start the Controller Services
 
-```
+```sh
 sudo systemctl daemon-reload
 sudo systemctl enable kube-apiserver kube-controller-manager kube-scheduler
 sudo systemctl start kube-apiserver kube-controller-manager kube-scheduler
@@ -203,7 +203,7 @@ A [Google Network Load Balancer](https://cloud.google.com/compute/docs/load-bala
 
 Install a basic web server to handle HTTP health checks:
 
-```
+```sh
 sudo apt-get update
 sudo apt-get install -y nginx
 ```
@@ -222,28 +222,28 @@ server {
 EOF
 ```
 
-```
+```sh
 sudo mv kubernetes.default.svc.cluster.local \
   /etc/nginx/sites-available/kubernetes.default.svc.cluster.local
 
 sudo ln -s /etc/nginx/sites-available/kubernetes.default.svc.cluster.local /etc/nginx/sites-enabled/
 ```
 
-```
+```sh
 sudo systemctl restart nginx
 ```
 
-```
+```sh
 sudo systemctl enable nginx
 ```
 
-### Verification
+### Component Verification
 
-```
+```sh
 kubectl get componentstatuses --kubeconfig admin.kubeconfig
 ```
 
-```
+```sh
 NAME                 STATUS    MESSAGE              ERROR
 controller-manager   Healthy   ok
 scheduler            Healthy   ok
@@ -254,11 +254,11 @@ etcd-1               Healthy   {"health": "true"}
 
 Test the nginx HTTP health check proxy:
 
-```
+```sh
 curl -H "Host: kubernetes.default.svc.cluster.local" -i http://127.0.0.1/healthz
 ```
 
-```
+```sh
 HTTP/1.1 200 OK
 Server: nginx/1.14.0 (Ubuntu)
 Date: Sat, 14 Sep 2019 18:34:11 GMT
@@ -278,8 +278,8 @@ In this section you will configure RBAC permissions to allow the Kubernetes API 
 
 The commands in this section will effect the entire cluster and only need to be run once from one of the controller nodes.
 
-```
-gcloud compute ssh --tunnel-through-iap controller-0
+```sh
+gcloud compute ssh controller-0
 ```
 
 Create the `system:kube-apiserver-to-kubelet` [ClusterRole](https://kubernetes.io/docs/admin/authorization/rbac/#role-and-clusterrole) with permissions to access the Kubelet API and perform most common tasks associated with managing pods:
@@ -360,7 +360,7 @@ gcloud compute target-pools create kubernetes-target-pool \
   --http-health-check kubernetes
 
 gcloud compute target-pools add-instances kubernetes-target-pool \
- --instances controller-0,controller-1,controller-2
+  --instances controller-0,controller-1,controller-2
 
 gcloud compute forwarding-rules create kubernetes-forwarding-rule \
   --address ${KUBERNETES_PUBLIC_ADDRESS} \
@@ -369,13 +369,13 @@ gcloud compute forwarding-rules create kubernetes-forwarding-rule \
   --target-pool kubernetes-target-pool
 ```
 
-### Verification
+### Instance Verification
 
 > The compute instances created in this tutorial will not have permission to complete this section. **Run the following commands from the same machine used to create the compute instances**.
 
 Retrieve the `kubernetes-the-hard-way` static IP address:
 
-```
+```sh
 KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-hard-way \
   --region $(gcloud config get-value compute/region) \
   --format 'value(address)')
@@ -383,24 +383,22 @@ KUBERNETES_PUBLIC_ADDRESS=$(gcloud compute addresses describe kubernetes-the-har
 
 Make a HTTP request for the Kubernetes version info:
 
-```
-curl --cacert /etc/etcd/ca.pem https://${KUBERNETES_PUBLIC_ADDRESS}:6443/version
+```sh
+curl --cacert ca.pem https://${KUBERNETES_PUBLIC_ADDRESS}:6443/version
 ```
 
 > output
 
-```
-{
-  "major": "1",
-  "minor": "15",
-  "gitVersion": "v1.15.3",
-  "gitCommit": "2d3c76f9091b6bec110a5e63777c332469e0cba2",
-  "gitTreeState": "clean",
-  "buildDate": "2019-08-19T11:05:50Z",
-  "goVersion": "go1.12.9",
-  "compiler": "gc",
-  "platform": "linux/amd64"
-}
+```sh
+"major": "1",
+"minor": "15",
+"gitVersion": "v1.15.3",
+"gitCommit": "2d3c76f9091b6bec110a5e63777c332469e0cba2",
+"gitTreeState": "clean",
+"buildDate": "2019-08-19T11:05:50Z",
+"goVersion": "go1.12.9",
+"compiler": "gc",
+"platform": "linux/amd64"
 ```
 
 Next: [Bootstrapping the Kubernetes Worker Nodes](09-bootstrapping-kubernetes-workers.md)
