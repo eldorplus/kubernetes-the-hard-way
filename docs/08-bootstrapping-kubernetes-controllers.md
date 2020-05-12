@@ -28,10 +28,10 @@ Download the official Kubernetes release binaries:
 
 ```sh
 wget -q --show-progress --https-only --timestamping \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-apiserver" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-controller-manager" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kube-scheduler" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.15.3/bin/linux/amd64/kubectl"
+  "https://storage.googleapis.com/kubernetes-release/release/v1.16.2/bin/linux/amd64/kube-apiserver" \
+  "https://storage.googleapis.com/kubernetes-release/release/v1.16.2/bin/linux/amd64/kube-controller-manager" \
+  "https://storage.googleapis.com/kubernetes-release/release/v1.16.2/bin/linux/amd64/kube-scheduler" \
+  "https://storage.googleapis.com/kubernetes-release/release/v1.16.2/bin/linux/amd64/kubectl"
 ```
 
 Install the Kubernetes binaries:
@@ -123,8 +123,7 @@ Documentation=https://github.com/kubernetes/kubernetes
 
 [Service]
 ExecStart=/usr/local/bin/kube-controller-manager \\
-  --address=0.0.0.0 \\
-  --cloud-provider=gce \\
+  --bind-address=0.0.0.0 \\
   --cluster-cidr=10.200.0.0/16 \\
   --cluster-name=kubernetes \\
   --cluster-signing-cert-file=/var/lib/kubernetes/ca.pem \\
@@ -286,7 +285,7 @@ Create the `system:kube-apiserver-to-kubelet` [ClusterRole](https://kubernetes.i
 
 ```sh
 cat <<EOF | kubectl apply --kubeconfig admin.kubeconfig -f -
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   annotations:
@@ -314,7 +313,7 @@ Bind the `system:kube-apiserver-to-kubelet` ClusterRole to the `kubernetes` user
 
 ```sh
 cat <<EOF | kubectl apply --kubeconfig admin.kubeconfig -f -
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: system:kube-apiserver
@@ -390,15 +389,15 @@ curl --cacert ca.pem https://${KUBERNETES_PUBLIC_ADDRESS}:6443/version
 > output
 
 ```sh
-"major": "1",
-"minor": "15",
-"gitVersion": "v1.15.3",
-"gitCommit": "2d3c76f9091b6bec110a5e63777c332469e0cba2",
-"gitTreeState": "clean",
-"buildDate": "2019-08-19T11:05:50Z",
-"goVersion": "go1.12.9",
-"compiler": "gc",
-"platform": "linux/amd64"
+  "major": "1",
+  "minor": "16",
+  "gitVersion": "v1.16.2",
+  "gitCommit": "c97fe5036ef3df2967d086711e6c0c405941e14b",
+  "gitTreeState": "clean",
+  "buildDate": "2019-10-15T19:09:08Z",
+  "goVersion": "go1.12.10",
+  "compiler": "gc",
+  "platform": "linux/amd64"
 ```
 
 Next: [Bootstrapping the Kubernetes Worker Nodes](09-bootstrapping-kubernetes-workers.md)

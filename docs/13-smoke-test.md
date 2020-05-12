@@ -103,7 +103,7 @@ curl --head http://127.0.0.1:8080
 
 ```sh
 HTTP/1.1 200 OK
-Server: nginx/1.17.3
+Server: nginx/1.17.5
 Date: Sat, 14 Sep 2019 21:10:11 GMT
 Content-Type: text/html
 Content-Length: 612
@@ -150,7 +150,7 @@ kubectl exec -ti $POD_NAME -- nginx -v
 > output (your output might vary depending on the nginx version)
 
 ```sh
-nginx version: nginx/1.17.3
+nginx version: nginx/1.17.5
 ```
 
 ## Services
@@ -221,7 +221,7 @@ curl -I http://${EXTERNAL_IP}:${NODE_PORT}
 
 ```sh
 HTTP/1.1 200 OK
-Server: nginx/1.17.3
+Server: nginx/1.17.5
 Date: Sat, 14 Sep 2019 21:12:35 GMT
 Content-Type: text/html
 Content-Length: 612
