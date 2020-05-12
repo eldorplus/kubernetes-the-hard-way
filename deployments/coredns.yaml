@@ -62,6 +62,7 @@ data:
         }
         forward . 8.8.8.8 8.8.4.4
         prometheus :9153
+        forward . /etc/resolv.conf
         cache 30
         loop
         reload
