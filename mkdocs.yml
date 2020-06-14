@@ -1,4 +1,5 @@
 site_name: Kubernetes The Hard Way
+
 pages:
   - Home: "index.md"
   - Prerequisites: 01-prerequisites.md
@@ -16,6 +17,12 @@ pages:
   - Smoke Test:  13-smoke-test.md
   - Cleaning Up: 14-cleanup.md
 docs_dir: docs
-theme: readthedocs
+
+theme:
+  name: material
+  language: en
+
 plugins:
     - search
+
+# docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material

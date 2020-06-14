@@ -5,3 +5,6 @@
 *.kubeconfig
 
 encryption-config.yaml
+
+# IntelliJ
+.idea
